@@ -1,0 +1,17 @@
+{
+	"format_version": 1,
+	"header": {
+		"description": "Snake",
+		"name": "Snake",
+		"uuid": "f046c098-d4cc-467f-9136-8dfdae9116d8",
+		"version": [0, 0, 1]
+	},
+	"modules": [
+		{
+			"description": "Snake",
+			"type": "client_data",
+			"uuid": "0624a524-65fd-4240-9399-c740191e6886",
+			"version": [0, 0, 1]
+		}
+	]
+}

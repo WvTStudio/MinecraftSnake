@@ -1,0 +1,244 @@
+"use strict";
+
+let sys = server.registerSystem(0, 0);
+
+//玩家类
+function Player(entity) {
+	let name = Entity.getName(entity);
+	let team;
+	let position;
+	this.getName = function () {
+		return name;
+	};
+	this.getPosition = function () {
+		position = Entity.getPosition(entity);
+		return position;
+	};
+	this.setPosition = function (p) {
+		position = p;
+		Entity.setPosition(entity, p);
+	};
+	this.setTeam = function (t) {
+		team = t;
+	};
+	this.getTeam = function () {
+		return team;
+	};
+	this.isInFortress = function (fortress) {
+		this.getPosition();
+		let area = fortress.getArea();
+		return position.y >= area.yStart && position.y <= area.yEnd &&
+			position.x >= area.xStart && position.x <= area.xEnd &&
+			position.z >= area.zStart && position.z <= area.zEnd;
+	};
+}
+
+//队伍类
+function Team(name, color) {
+	let score;
+	this.getScore = function () {
+		return score;
+	};
+	this.setColor = function (c) {
+		color = c;
+	};
+	this.setName = function (n) {
+		name = n;
+	};
+	this.getName = function () {
+		return name;
+	};
+	this.addScore = function (number) {
+		score += number;
+	}
+}
+
+//据点类
+function Fortress(name, maxHealth, area, owner) {
+	let currentHealth = maxHealth;
+	this.getName = function () {
+		return name;
+	};
+	this.getHealth = function () {
+		return currentHealth;
+	};
+	//占据点
+	this.hurt = function (team, damage) {
+		//是否为拥有者
+		if (owner === team) {
+			//如果生命值小于最大生命值则增加生命值
+			if (currentHealth < maxHealth) {
+				currentHealth += damage;
+				if (currentHealth > maxHealth) {
+					currentHealth = maxHealth;
+				}
+			}
+		} else {
+			currentHealth -= damage;
+			//被占领 更改拥有者和生命值
+			if (currentHealth < damage) {
+				owner = team;
+				currentHealth = maxHealth;
+				Event.execute("title @p title §4据点 " + name + " 已被 " + team.getName() + " 占领！");
+				team.addScore(10);
+			}
+		}
+	};
+	this.getArea = function () {
+		return area;
+	};
+	this.getOwner = function () {
+		return owner;
+	};
+}
+
+function Game() {
+	let players = [];
+	let fortresses = [];
+	let teams = [];
+	
+	this.getPlayers = function () {
+		return players;
+	};
+	this.getFortresses = function () {
+		return fortresses;
+	};
+	
+	this.getTeams = function () {
+		return teams;
+	};
+	
+	this.addPlayer = function (entity) {
+		players.push(new Player(entity));
+	};
+	
+	this.playerDisconnect = function (entity) {
+	
+	};
+	
+	this.addTeam = function (t) {
+	
+	};
+	
+	this.update = function () {
+	
+	};
+	
+	this.start = function () {
+		//...
+		Event.chat("需要有足够的玩家才能开始游戏");
+		//...
+		Event.chat("有玩家还未选择队伍");
+		//...
+		Event.chat("有玩家还未选择职业");
+	};
+	this.pause = function () {
+		Event.chat("游戏已暂停");
+	};
+	this.resume = function () {
+		Event.chat("游戏恢复");
+	};
+}
+
+let players = [];
+let fortresses = [];
+let teams = [];
+
+let My = {};
+
+let game = new Game();
+
+sys.initialize = function () {
+	//初始化
+	sys.listenForEvent("my:player_exited", (data) => My.onPlayerJoined(data.player));
+	sys.listenForEvent("my:player_joined", (data) => My.onPlayerJoined(data.player));
+	teams.push(new Team("反恐精英", "§2"));
+	teams.push(new Team("恐怖分子", "§4"));
+	fortresses.push(new Fortress("A", 200, {xStart: -5, yStart: 70, zStart: -5, xEnd: 5, yEnd: 80, zEnd: 5}, null));
+	fortresses.push(new Fortress("B", 200, {xStart: -15, yStart: 70, zStart: -15, xEnd: -5, yEnd: 80, zEnd: -5}, null));
+};
+
+let ticks = 0;
+//系统更新
+sys.update = function () {
+	ticks++;
+	if (ticks === 100) {
+		ticks = 0;
+		let message = "";
+		message += "\n§4【玩家】§2\n";
+		for (let player of players) {
+			message += "名称：" + player.getName() + " 队伍：" + player.getTeam().getName() + "\n";
+		}
+		message += "§4【队伍】§2\n";
+		for (let team of teams) {
+			message += "名称：" + team.getName() + "\n";
+		}
+		message += "§4【据点】§2\n";
+		for (let fortress of fortresses) {
+			message += "名称：" + fortress.getName() + " 剩余血量：" + fortress.getHealth() + " 所有者：" + fortress.getOwner().getName() + "\n";
+		}
+		Event.chat(message);
+	}
+	//遍历玩家
+	for (let player of players) {
+		//遍历据点
+		for (let fortress of fortresses) {
+			if (player.isInFortress(fortress)) {
+				fortress.hurt(player.getTeam(), 1);
+			}
+		}
+	}
+};
+
+//当玩家加入世界
+My.onPlayerJoined = function (player) {
+	Event.execute("title \"" + Entity.getName(player) + "\" title §6Welcome !");
+	players.push(new Player(player));
+	if (players.length % 2 === 0) {
+		players[0].setTeam(teams[0]);
+	}
+	if (players.length % 2 === 1) {
+		players[0].setTeam(teams[1]);
+	}
+};
+
+//当玩家退出世界
+My.onPlayerExited = function (player) {
+	game.playerDisconnect(player);
+	for (let i = 0; i < players.length; i++) {
+		if (players[i].entity === player) {
+			//移除玩家
+			players.splice(i, 1);
+		}
+	}
+};
+
+let Entity = {};
+
+Entity.getPosition = function (entity) {
+	if (sys.hasComponent(entity, "minecraft:position")) {
+		return sys.getComponent(entity, "minecraft:position");
+	}
+};
+Entity.setPosition = function (entity, position) {
+	if (sys.hasComponent(entity, "minecraft:position")) {
+		sys.applyComponentChanges(entity, position);
+	}
+};
+
+Entity.getName = function (entity) {
+	if (sys.hasComponent(entity, "minecraft:nameable")) {
+		let comp = sys.getComponent(entity, "minecraft:nameable");
+		return comp.name;
+	}
+};
+
+
+let Event = {};
+Event.chat = function (content) {
+	sys.broadcastEvent("minecraft:display_chat_event", content);
+};
+
+Event.execute = function (command) {
+	sys.broadcastEvent("minecraft:execute_command", command);
+};
