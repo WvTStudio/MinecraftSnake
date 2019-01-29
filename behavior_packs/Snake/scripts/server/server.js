@@ -210,7 +210,6 @@ let PlayGround = function (xStart, yStart, zStart) {
 		// Event.chat("12timers");
 		let randomX = Math.round(Math.random() * playGround.width);
 		let randomY = Math.round(Math.random() * playGround.height);
-		
 		// Event.chat("randomX: " + randomX + " randomY: " + randomY);
 		playGround.addFood(new Food(randomX, randomY, 1));
 	};
