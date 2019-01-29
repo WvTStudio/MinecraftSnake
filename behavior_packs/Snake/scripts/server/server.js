@@ -20,13 +20,7 @@ sys.update = function () {
 		ticks = 0;
 		
 		if (run === true) {
-			// Event.chat("5ticks");
-			timer++;
-			
-			if (timer === 32) {
-				timer = 0;
-				playGround.randomFood();
-			}
+			// Event.chat("5ticks")；
 			
 			let comp = Entity.getPosition(playerEntity);
 			let blockX = Math.floor(comp.x - playerX);
@@ -215,6 +209,7 @@ let PlayGround = function (xStart, yStart, zStart) {
 	};
 	
 	this.removeFood = function (food) {
+		this.randomFood();
 		for (let i = 0; i < this.foods.length; i++) {
 			if (this.foods[i] === food) {
 				// 删除food
