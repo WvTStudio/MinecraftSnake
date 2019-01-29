@@ -171,7 +171,7 @@ let Snake = function (playGround) {
 	};
 	
 	this.gameover = function () {
-		Event.chat("Game Over!");
+		Event.showTitle("@p","Game Over!");
 	};
 };
 
