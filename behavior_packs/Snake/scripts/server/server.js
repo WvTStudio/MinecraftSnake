@@ -283,3 +283,6 @@ let Event = {};
 Event.chat = function (content) {
 	sys.broadcastEvent("minecraft:display_chat_event", content);
 };
+Event.showTitle = function (target, content) {
+	sys.broadcastEvent("minecraft:execute_command", "title " + target + " title " + content)
+};
