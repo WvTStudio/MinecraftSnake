@@ -13,6 +13,7 @@ sys.initialize = function () {
 
 let ticks = 0;
 let timer = 0;
+
 sys.update = function () {
 	ticks++;
 	if (ticks === 5) {
