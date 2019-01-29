@@ -105,21 +105,29 @@ let Snake = function (playGround) {
 			case this.UP:
 				if (this.snakeHead.y < this.playGround.height)
 					this.snakeHead.y += this.speed;
+				else
+					this.gameover();
 				break;
 			case this.DOWN:
 				if (this.snakeHead.y > 0)
 					this.snakeHead.y -= this.speed;
+				else
+					this.gameover();
 				break;
 			case this.RIGHT:
 				if (this.snakeHead.x < this.playGround.width)
 					this.snakeHead.x += this.speed;
+				else
+					this.gameover();
 				break;
 			case this.LEFT:
 				if (this.snakeHead.x > 0)
 					this.snakeHead.x -= this.speed;
+				else
+					this.gameover();
 				break;
 			default:
-				this.gameover();
+				
 				break;
 		}
 		// Event.chat("iteratorFoods");
@@ -195,7 +203,6 @@ let PlayGround = function (xStart, yStart, zStart) {
 		let randomY = Math.round(Math.random() * playGround.height);
 		
 		// Event.chat("randomX: " + randomX + " randomY: " + randomY);
-		
 		playGround.addFood(new Food(randomX, randomY, 1));
 	};
 	
@@ -216,7 +223,6 @@ let Food = function (x, y, score) {
 };
 
 let Commands = {};
-
 Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block) {
 	sys.broadcastEvent("minecraft:execute_command", "fill " +
 		fromX + " " +
@@ -228,7 +234,6 @@ Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block) {
 		block
 	);
 };
-
 Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block, data) {
 	sys.broadcastEvent("minecraft:execute_command", "fill " +
 		fromX + " " +
@@ -241,7 +246,6 @@ Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block, data) {
 		data
 	);
 };
-
 Commands.setBlock = function (x, y, z, block) {
 	sys.broadcastEvent("minecraft:execute_command", "setBlock " +
 		x + " " +
@@ -250,7 +254,6 @@ Commands.setBlock = function (x, y, z, block) {
 		block
 	);
 };
-
 Commands.setBlock = function (x, y, z, block, data) {
 	sys.broadcastEvent("minecraft:execute_command", "setBlock " +
 		x + " " +
