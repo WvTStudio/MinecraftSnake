@@ -64,8 +64,10 @@ let Snake = function (playGround) {
 	this.LEFT = 1;
 	this.DOWN = 2;
 	this.RIGHT = 3;
+	
 	// 游戏面板
 	this.playGround = playGround;
+	
 	// 位置
 	this.snakeHead = {
 		x: 10,
@@ -126,23 +128,23 @@ let Snake = function (playGround) {
 				else
 					this.gameover();
 				break;
-			default:
-				
-				break;
 		}
 		// Event.chat("iteratorFoods");
 		// 吃食物
 		for (let food of this.playGround.foods) {
 			if (this.snakeHead.x === food.x && this.snakeHead.y === food.y) {
 				this.playGround.removeFood(food);
-				this.addBody(food.x, food.y);
+				
+				this.addBody(this.snakeBodies[this.snakeBodies.length - 1].x, this.snakeBodies[this.snakeBodies.length - 1].y);
 			}
 		}
 	};
+	
 	this.addBody = function (x, y) {
 		// Event.chat("addBody");
 		this.snakeBodies.push({x: x, y: y});
 	};
+	
 	this.draw = function () {
 		// Event.chat("draw");
 		for (let food of this.playGround.foods) {
@@ -158,6 +160,11 @@ let Snake = function (playGround) {
 		
 		// Event.chat(this.snakeBodies.length);
 		for (let i = this.snakeBodies.length - 1; i >= 0; i--) {
+			
+			if (this.snakeHead.x === this.snakeBodies[i].x && this.snakeHead.y === this.snakeBodies[i].y) {
+				this.gameover();
+			}
+			
 			if (i === 0) {
 				this.snakeBodies[i].x = this.snakeHead.x;
 				this.snakeBodies[i].y = this.snakeHead.y;
