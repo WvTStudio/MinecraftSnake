@@ -71,6 +71,7 @@ let Snake = function (playGround) {
 		x: 10,
 		y: 10
 	};
+	// 身体
 	this.snakeBodies = [];
 	// 速度
 	this.speed = 1;
@@ -159,7 +160,7 @@ let Snake = function (playGround) {
 		}
 	};
 	this.gameover = function () {
-		Event.chat("Game Over!")
+		Event.chat("Game Over!");
 	};
 };
 
