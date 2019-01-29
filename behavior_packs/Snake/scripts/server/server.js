@@ -12,7 +12,6 @@ sys.initialize = function () {
 };
 
 let ticks = 0;
-let timer = 0;
 
 sys.update = function () {
 	ticks++;
@@ -129,7 +128,7 @@ let Snake = function (playGround) {
 		for (let food of this.playGround.foods) {
 			if (this.snakeHead.x === food.x && this.snakeHead.y === food.y) {
 				this.playGround.removeFood(food);
-				
+				this.playGround.randomFood();
 				this.addBody(this.snakeBodies[this.snakeBodies.length - 1].x, this.snakeBodies[this.snakeBodies.length - 1].y);
 			}
 		}
@@ -209,7 +208,6 @@ let PlayGround = function (xStart, yStart, zStart) {
 	};
 	
 	this.removeFood = function (food) {
-		this.randomFood();
 		for (let i = 0; i < this.foods.length; i++) {
 			if (this.foods[i] === food) {
 				// 删除food
