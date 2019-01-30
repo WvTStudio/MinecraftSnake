@@ -1,7 +1,24 @@
 let sys = server.registerSystem(0, 0);
 
+let controller;
+
 sys.initialize = function () {
+	controller = new Controller();
 	Scoreboard.addScoreboard();
+};
+
+sys.update = function () {
+	sys.listenForEvent("my:player_joined", (playerEntity) => My.onPlayerJoined(playerEntity));
+	sys.listenForEvent("my:player_exited", (playerEntity) => My.onPlayerExited(playerEntity));
+};
+
+let My = {};
+My.onPlayerJoined = function (playerEntity) {
+
+};
+
+My.onPlayerExited = function (playerEntity) {
+
 };
 
 let Controller = function () {
@@ -28,9 +45,17 @@ let Controller = function () {
 };
 
 let PlayGround = function (x, y, z, player) {
-	this.playerEntity = player;
-	this.playerName = Entity.getName();
-	this.playerPosition = {x: 0, y: 0, z: 0};
+	this.player = {
+		entity: player,
+		name: Entity.getName(player),
+		x: 0,
+		y: 0,
+		z: 0
+	};
+	
+	this.height = 20;
+	this.width = 20;
+	
 	this.xStart = x;
 	this.yStart = y;
 	this.zStart = z;
@@ -38,35 +63,42 @@ let PlayGround = function (x, y, z, player) {
 	this.yEnd = this.yStart + this.height;
 	this.zEnd = this.zStart;
 	
+	this.controlCenter = {
+		x: this.xStart + 10,
+		y: this.yStart,
+		z: this.zStart - 20
+	};
 	
-	this.height = 20;
-	this.width = 20;
 	this.isOver = false;
 	this.score = 0;
 	
 	this.snake = new Snake();
 	this.foods = [];
 	
+	// 清屏
 	this.clearGround = function (color) {
-		// 清屏
+		Commands.fill(this.xStart, this.yStart, this.zStart, xEnd, yEnd, zEnd, "wool", color);
 	};
 	this.update = function () {
 		if (!this.isOver) {
 			// 检测玩家的控制行为
-			let comp = Entity.getPosition(this.playerEntity);
-			let blockX = Math.floor(comp.x - this.playerPosition.x);
-			let blockZ = Math.floor(comp.z - this.playerPosition.z);
+			let pos = Entity.getPosition(this.player.entity);
+			// 玩家相对于控制中心的偏移
+			let xOffset = pos.x - this.controlCenter.x;
+			let zOffset = pos.z - this.controlCenter.z;
 			
-			if (blockZ === 0) {
-				if (blockX === 1) {
+			// 如果横向偏移大于纵向偏移
+			if (xOffset > zOffset) {
+				// 如果横向偏移为正
+				if (xOffset > 0) {
 					this.snake.turnRight();
-				} else if (blockX === -1) {
+				} else if (xOffset < 0) {
 					this.snake.turnLeft();
 				}
-			} else if (blockX === 0) {
-				if (blockZ === 1) {
+			} else if (zOffset > xOffset) {
+				if (zOffset > 0) {
 					this.snake.turnDown();
-				} else if (blockZ === -1) {
+				} else if (zOffset < 0) {
 					this.snake.turnUp();
 				}
 			}
