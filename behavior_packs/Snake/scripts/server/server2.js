@@ -10,12 +10,12 @@ let Controller = function () {
 	this.addPlayer = function (player) {
 		// addPlayer
 		this.playGrounds.push(new PlayGround(this.playGrounds.length * 40, 5, 10, player));
-		Scoreboard.addPlayer(Event.getName(player));
+		Scoreboard.addPlayer(Entity.getName(player));
 	};
 	
 	this.removePlayer = function (player) {
 		// removePlayer
-		Scoreboard.deletePlayer(Event.getName(player));
+		Scoreboard.deletePlayer(Entity.getName(player));
 	};
 	
 	this.update = function () {
@@ -277,7 +277,6 @@ Entity.getPosition = function (entity) {
 Entity.setPosition = function (entity, position) {
 	sys.applyComponentChanges(entity, position);
 };
-
 Entity.setPlayerPosition = function (playerName, x, y, z) {
 	sys.broadcastEvent("minecraft:execute_command", "tp " +
 		playerName + " " +
@@ -286,6 +285,9 @@ Entity.setPlayerPosition = function (playerName, x, y, z) {
 		z
 	);
 };
+Entity.getName = function (entity) {
+	return sys.getComponent(entity, "minecraft:nameable").name;
+};
 
 let Event = {};
 Event.chat = function (content) {
@@ -293,9 +295,6 @@ Event.chat = function (content) {
 };
 Event.showTitle = function (target, content) {
 	sys.broadcastEvent("minecraft:execute_command", "title " + target + " title " + content)
-};
-Event.getName = function (entity) {
-	return sys.getComponent(entity, "minecraft:nameable").name;
 };
 
 let Scoreboard = {};
