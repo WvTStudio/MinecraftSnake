@@ -1,9 +1,4 @@
 
-
-
-
-
-
 let Controller = function () {
 	this.playGrounds = [];
 	
@@ -280,4 +275,44 @@ Event.chat = function (content) {
 };
 Event.showTitle = function (target, content) {
 	sys.broadcastEvent("minecraft:execute_command", "title " + target + " title " + content)
+};
+
+Event.getPlayerName = function (player) {
+	return sys.getComponent(player, "minecraft:nameable").name;
+};
+
+let Scoreboard = function () {
+	this.changePlayerScore = function (playGround) {
+		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
+			"players " +
+			"set " +
+			Event.getPlayerName(playGround.playerEntity) +
+			" jfb " +
+			playGround.score
+		);
+	};
+	this.addPlayer = function (playGround) {
+		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
+			"players " +
+			"add " +
+			Event.getPlayerName(playGround.playerEntity) +
+			" jfb " +
+			"0"
+		);
+	};
+	this.addScoreboard = function () {
+		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
+			"objectives " +
+			"add " +
+			"jfb " +
+			"dummy " +
+			"分数"
+		);
+		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
+			"objectives " +
+			"setdisplay " +
+			"sidebar " +
+			"jfb"
+		);
+	};
 };
