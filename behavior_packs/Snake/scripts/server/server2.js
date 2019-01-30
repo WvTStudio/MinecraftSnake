@@ -265,8 +265,13 @@ Entity.getPosition = function (entity) {
 		return null;
 	}
 };
-Entity.setPosition = function (entity, position) {
-	sys.applyComponentChanges(entity, position);
+Entity.setPosition = function (player, x, y, z) {
+	sys.broadcastEvent("minecraft:execute_command", "tp " +
+		Event.getPlayerName(player) +
+		" " + x +
+		" " + y +
+		" " + z
+	);
 };
 
 let Event = {};
