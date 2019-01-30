@@ -10,12 +10,12 @@ let Controller = function () {
 	this.addPlayer = function (player) {
 		// addPlayer
 		this.playGrounds.push(new PlayGround(this.playGrounds.length * 40, 5, 10, player));
-		scoreboard.addPlayer(Event.getPlayerName(player));
+		Scoreboard.addPlayer(Event.getName(player));
 	};
 	
 	this.removePlayer = function (player) {
 		// removePlayer
-		scoreboard.deletePlayer(Event.getPlayerName(player));
+		Scoreboard.deletePlayer(Event.getName(player));
 	};
 	
 	this.update = function () {
