@@ -242,7 +242,7 @@ let PlayGround = function (xStart, yStart, zStart, player) {
 	this.foods = [];
 	
 	this.playerEntity = player;
-	this.snake = new Snake();
+	this.snake = new Snake(this);
 	
 	let xEnd = this.xStart + this.width;
 	let yEnd = this.yStart + this.height;
