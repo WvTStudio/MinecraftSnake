@@ -1,10 +1,7 @@
-
 let sys = server.registerSystem(0, 0);
-let scoreboard;
 
 sys.initialize = function () {
-	scoreboard = new Scoreboard();
-	scoreboard.addScoreboard();
+	Scoreboard.addScoreboard();
 };
 
 let Controller = function () {
@@ -32,6 +29,7 @@ let Controller = function () {
 
 let PlayGround = function (x, y, z, player) {
 	this.playerEntity = player;
+	this.playerName = Entity.getName();
 	this.playerPosition = {x: 0, y: 0, z: 0};
 	this.xStart = x;
 	this.yStart = y;
@@ -276,12 +274,16 @@ Entity.getPosition = function (entity) {
 		return null;
 	}
 };
-Entity.setPosition = function (player, x, y, z) {
+Entity.setPosition = function (entity, position) {
+	sys.applyComponentChanges(entity, position);
+};
+
+Entity.setPlayerPosition = function (playerName, x, y, z) {
 	sys.broadcastEvent("minecraft:execute_command", "tp " +
-		Event.getPlayerName(player) +
-		" " + x +
-		" " + y +
-		" " + z
+		playerName + " " +
+		x + " " +
+		y + " " +
+		z
 	);
 };
 
@@ -292,51 +294,21 @@ Event.chat = function (content) {
 Event.showTitle = function (target, content) {
 	sys.broadcastEvent("minecraft:execute_command", "title " + target + " title " + content)
 };
-
-Event.getPlayerName = function (player) {
-	return sys.getComponent(player, "minecraft:nameable").name;
+Event.getName = function (entity) {
+	return sys.getComponent(entity, "minecraft:nameable").name;
 };
 
-let Scoreboard = function () {
-	this.changePlayerScore = function (playGround) {
-		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
-			"players " +
-			"set " +
-			Event.getPlayerName(playGround.playerEntity) +
-			" jfb " +
-			playGround.score
-		);
-	};
-	this.addPlayer = function (playerName) {
-		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
-			"players " +
-			"add " +
-			playerName +
-			" jfb " +
-			"0"
-		);
-	};
-	this.deletePlayer = function (playerName) {
-		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
-			"players " +
-			"reset " +
-			playerName +
-			" jfb"
-		);
-	}
-	this.addScoreboard = function () {
-		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
-			"objectives " +
-			"add " +
-			"jfb " +
-			"dummy " +
-			"§6分数"
-		);
-		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
-			"objectives " +
-			"setdisplay " +
-			"sidebar " +
-			"jfb"
-		);
-	};
+let Scoreboard = {};
+Scoreboard.changePlayerScore = function (playerName, score) {
+	sys.broadcastEvent("minecraft:execute_command", "scoreboard players set " + playerName + " jfb " + score);
+};
+Scoreboard.addPlayer = function (playerName) {
+	sys.broadcastEvent("minecraft:execute_command", "scoreboard players add " + playerName + " jfb 0");
+};
+Scoreboard.deletePlayer = function (playerName) {
+	sys.broadcastEvent("minecraft:execute_command", "scoreboard players reset " + playerName + " jfb");
+};
+Scoreboard.addScoreboard = function () {
+	sys.broadcastEvent("minecraft:execute_command", "scoreboard objectives add jfb dummy §6分数");
+	sys.broadcastEvent("minecraft:execute_command", "scoreboard objectives setdisplay sidebar jfb");
 };
