@@ -1,9 +1,15 @@
+
+
+
+
+
+
 let Controller = function () {
 	this.playGrounds = [];
 	
 	this.addPlayer = function (player) {
 		// addPlayer
-		playGrounds.push(new PlayGround(playGrounds.length * 40, 5, 10, player));
+		this.playGrounds.push(new PlayGround(this.playGrounds.length * 40, 5, 10, player));
 	};
 	
 	this.removePlayer = function (player) {
@@ -14,7 +20,6 @@ let Controller = function () {
 		for (let playGround of this.playGrounds) {
 			playGround.update();
 			playGround.draw();
-			playGround.score;
 			
 		}
 	};
@@ -23,36 +28,42 @@ let Controller = function () {
 let PlayGround = function (x, y, z, player) {
 	this.playerEntity = player;
 	this.playerPosition = {x: 0, y: 0, z: 0};
+	this.xStart = x;
+	this.yStart = y;
+	this.zStart = z;
+	this.xEnd = this.xStart + this.width;
+	this.yEnd = this.yStart + this.height;
+	this.zEnd = this.zStart;
+	
 	
 	this.height = 20;
 	this.width = 20;
 	this.isOver = false;
-	this.started = false;
+	this.score = 0;
+	
 	this.snake = new Snake();
 	this.foods = [];
-	
-	this.score = 0;
 	
 	this.clearGround = function (color) {
 		// 清屏
 	};
 	this.update = function () {
-		if (this.started) {
+		if (!this.isOver) {
 			// 检测玩家的控制行为
 			let comp = Entity.getPosition(this.playerEntity);
-			let blockX = Math.floor(comp.x - playerX);
-			let blockZ = Math.floor(comp.z - playerZ);
+			let blockX = Math.floor(comp.x - this.playerPosition.x);
+			let blockZ = Math.floor(comp.z - this.playerPosition.z);
 			if (blockZ === 0) {
 				if (blockX === 1) {
-					snake.turnRight();
+					this.snake.turnRight();
 				} else if (blockX === -1) {
-					snake.turnLeft();
+					this.snake.turnLeft();
 				}
 			} else if (blockX === 0) {
 				if (blockZ === 1) {
-					snake.turnDown();
+					this.snake.turnDown();
 				} else if (blockZ === -1) {
-					snake.turnUp();
+					this.snake.turnUp();
 				}
 			}
 			
@@ -78,13 +89,13 @@ let PlayGround = function (x, y, z, player) {
 			for (let food of this.foods) {
 				if (this.x === food.x && this.y === food.y) {
 					// 删除此食物
-					this.playGround.removeFood(food);
+					this.removeFood(food);
 					
 					// 增加得分
 					this.score++;
 					
 					// 随机生成一个食物
-					this.playGround.randomFood();
+					this.randomFood();
 					// 添加一个身体
 					this.snake.addBody();
 				}
@@ -93,7 +104,7 @@ let PlayGround = function (x, y, z, player) {
 	};
 	this.draw = function () {
 		// 清屏
-		playGround.clearGround();
+		this.clearGround();
 		// 绘制食物
 		for (let food of this.foods) {
 			this.dot(food.x, food.y, "wool", 3);
@@ -108,16 +119,38 @@ let PlayGround = function (x, y, z, player) {
 	this.gameOver = function () {
 		this.isOver = true;
 		Event.showTitle("@p", "Game Over!");
-		run = false;
-		this.playGround.clearGround(1);
+		this.clearGround(1);
 	};
-	this.addFood = function (x, y, type) {
-	
+	this.addFood = function (food) {
+		this.foods.push(food);
 	};
 	this.randomFood = function () {
-	
+		let randomX = Math.round(Math.random() * this.width);
+		let randomY = Math.round(Math.random() * this.height);
+		this.addFood(new Food(randomX, randomY, 0));
+	};
+	this.removeFood = function (food) {
+		for (let i = 0; i < this.foods.length; i++) {
+			if (this.foods[i] === food) {
+				// 删除food
+				this.foods.splice(i, 1);
+			}
+		}
 	};
 	
+	this.clearGround = function (color) {
+		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
+	};
+	this.dot = function (x, y, block, data) {
+		// 重建自-x左向右+x，自-y下向上+y的坐标系
+		Commands.setBlock(this.xStart + x, this.yStart + y, this.zStart, block, data);
+	};
+};
+
+let Food = function (x, y, type) {
+	this.x = x;
+	this.y = y;
+	this.type = type;
 };
 
 let Snake = function () {
@@ -179,10 +212,72 @@ let Snake = function () {
 				this.x -= this.speed;
 				break;
 		}
-		
 	};
+	
 	this.addBody = function () {
 		this.snakeBodies.push({x: [this.snakeBodies.length - 1].x, y: this.snakeBodies[this.snakeBodies.length - 1].y});
 	};
 	
+};
+
+let Commands = {};
+Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block) {
+	sys.broadcastEvent("minecraft:execute_command", "fill " +
+		fromX + " " +
+		fromY + " " +
+		fromZ + " " +
+		toX + " " +
+		toY + " " +
+		toZ + " " +
+		block
+	);
+};
+Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block, data) {
+	sys.broadcastEvent("minecraft:execute_command", "fill " +
+		fromX + " " +
+		fromY + " " +
+		fromZ + " " +
+		toX + " " +
+		toY + " " +
+		toZ + " " +
+		block + " " +
+		data
+	);
+};
+Commands.setBlock = function (x, y, z, block) {
+	sys.broadcastEvent("minecraft:execute_command", "setBlock " +
+		x + " " +
+		y + " " +
+		z + " " +
+		block
+	);
+};
+Commands.setBlock = function (x, y, z, block, data) {
+	sys.broadcastEvent("minecraft:execute_command", "setBlock " +
+		x + " " +
+		y + " " +
+		z + " " +
+		block + " " +
+		data
+	);
+};
+
+let Entity = {};
+Entity.getPosition = function (entity) {
+	if (sys.hasComponent(entity, "minecraft:position")) {
+		return sys.getComponent(entity, "minecraft:position");
+	} else {
+		return null;
+	}
+};
+Entity.setPosition = function (entity, position) {
+	sys.applyComponentChanges(entity, position);
+};
+
+let Event = {};
+Event.chat = function (content) {
+	sys.broadcastEvent("minecraft:display_chat_event", content);
+};
+Event.showTitle = function (target, content) {
+	sys.broadcastEvent("minecraft:execute_command", "title " + target + " title " + content)
 };
