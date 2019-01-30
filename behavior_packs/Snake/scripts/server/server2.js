@@ -1,5 +1,5 @@
 let Controller = function () {
-	let playGrounds = [];
+	this.playGrounds = [];
 	
 	this.addPlayer = function (player) {
 		// addPlayer
