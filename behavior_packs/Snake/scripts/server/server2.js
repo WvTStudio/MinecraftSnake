@@ -1,14 +1,24 @@
 
+let sys = server.registerSystem(0, 0);
+let scoreboard;
+
+sys.initialize = function () {
+	scoreboard = new Scoreboard();
+	scoreboard.addScoreboard();
+};
+
 let Controller = function () {
 	this.playGrounds = [];
 	
 	this.addPlayer = function (player) {
 		// addPlayer
 		this.playGrounds.push(new PlayGround(this.playGrounds.length * 40, 5, 10, player));
+		scoreboard.addPlayer(Event.getPlayerName(player));
 	};
 	
 	this.removePlayer = function (player) {
 		// removePlayer
+		scoreboard.deletePlayer(Event.getPlayerName(player));
 	};
 	
 	this.update = function () {
@@ -266,8 +276,13 @@ Entity.getPosition = function (entity) {
 		return null;
 	}
 };
-Entity.setPosition = function (entity, position) {
-	sys.applyComponentChanges(entity, position);
+Entity.setPosition = function (player, x, y, z) {
+	sys.broadcastEvent("minecraft:execute_command", "tp " +
+		Event.getPlayerName(player) +
+		" " + x +
+		" " + y +
+		" " + z
+	);
 };
 
 let Event = {};
@@ -292,22 +307,30 @@ let Scoreboard = function () {
 			playGround.score
 		);
 	};
-	this.addPlayer = function (playGround) {
+	this.addPlayer = function (playerName) {
 		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
 			"players " +
 			"add " +
-			Event.getPlayerName(playGround.playerEntity) +
+			playerName +
 			" jfb " +
 			"0"
 		);
 	};
+	this.deletePlayer = function (playerName) {
+		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
+			"players " +
+			"reset " +
+			playerName +
+			" jfb"
+		);
+	}
 	this.addScoreboard = function () {
 		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
 			"objectives " +
 			"add " +
 			"jfb " +
 			"dummy " +
-			"分数"
+			"§6分数"
 		);
 		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
 			"objectives " +
