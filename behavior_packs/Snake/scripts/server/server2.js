@@ -311,7 +311,7 @@ let Scoreboard = function () {
 			"add " +
 			"jfb " +
 			"dummy " +
-			"分数"
+			"§6分数"
 		);
 		sys.broadcastEvent("minecraft:execute_command", "scoreboard " +
 			"objectives " +
