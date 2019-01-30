@@ -48,6 +48,7 @@ let PlayGround = function (x, y, z, player) {
 			let comp = Entity.getPosition(this.playerEntity);
 			let blockX = Math.floor(comp.x - this.playerPosition.x);
 			let blockZ = Math.floor(comp.z - this.playerPosition.z);
+			
 			if (blockZ === 0) {
 				if (blockX === 1) {
 					this.snake.turnRight();

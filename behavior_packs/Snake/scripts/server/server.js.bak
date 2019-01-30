@@ -1,244 +1,564 @@
-"use strict";
-
 let sys = server.registerSystem(0, 0);
-
-//玩家类
-function Player(entity) {
-	let name = Entity.getName(entity);
-	let team;
-	let position;
-	this.getName = function () {
-		return name;
-	};
-	this.getPosition = function () {
-		position = Entity.getPosition(entity);
-		return position;
-	};
-	this.setPosition = function (p) {
-		position = p;
-		Entity.setPosition(entity, p);
-	};
-	this.setTeam = function (t) {
-		team = t;
-	};
-	this.getTeam = function () {
-		return team;
-	};
-	this.isInFortress = function (fortress) {
-		this.getPosition();
-		let area = fortress.getArea();
-		return position.y >= area.yStart && position.y <= area.yEnd &&
-			position.x >= area.xStart && position.x <= area.xEnd &&
-			position.z >= area.zStart && position.z <= area.zEnd;
-	};
-}
-
-//队伍类
-function Team(name, color) {
-	let score;
-	this.getScore = function () {
-		return score;
-	};
-	this.setColor = function (c) {
-		color = c;
-	};
-	this.setName = function (n) {
-		name = n;
-	};
-	this.getName = function () {
-		return name;
-	};
-	this.addScore = function (number) {
-		score += number;
-	}
-}
-
-//据点类
-function Fortress(name, maxHealth, area, owner) {
-	let currentHealth = maxHealth;
-	this.getName = function () {
-		return name;
-	};
-	this.getHealth = function () {
-		return currentHealth;
-	};
-	//占据点
-	this.hurt = function (team, damage) {
-		//是否为拥有者
-		if (owner === team) {
-			//如果生命值小于最大生命值则增加生命值
-			if (currentHealth < maxHealth) {
-				currentHealth += damage;
-				if (currentHealth > maxHealth) {
-					currentHealth = maxHealth;
-				}
-			}
-		} else {
-			currentHealth -= damage;
-			//被占领 更改拥有者和生命值
-			if (currentHealth < damage) {
-				owner = team;
-				currentHealth = maxHealth;
-				Event.execute("title @p title §4据点 " + name + " 已被 " + team.getName() + " 占领！");
-				team.addScore(10);
-			}
-		}
-	};
-	this.getArea = function () {
-		return area;
-	};
-	this.getOwner = function () {
-		return owner;
-	};
-}
-
-function Game() {
-	let players = [];
-	let fortresses = [];
-	let teams = [];
-	
-	this.getPlayers = function () {
-		return players;
-	};
-	this.getFortresses = function () {
-		return fortresses;
-	};
-	
-	this.getTeams = function () {
-		return teams;
-	};
-	
-	this.addPlayer = function (entity) {
-		players.push(new Player(entity));
-	};
-	
-	this.playerDisconnect = function (entity) {
-	
-	};
-	
-	this.addTeam = function (t) {
-	
-	};
-	
-	this.update = function () {
-	
-	};
-	
-	this.start = function () {
-		//...
-		Event.chat("需要有足够的玩家才能开始游戏");
-		//...
-		Event.chat("有玩家还未选择队伍");
-		//...
-		Event.chat("有玩家还未选择职业");
-	};
-	this.pause = function () {
-		Event.chat("游戏已暂停");
-	};
-	this.resume = function () {
-		Event.chat("游戏恢复");
-	};
-}
-
-let players = [];
-let fortresses = [];
-let teams = [];
-
 let My = {};
 
-let game = new Game();
+let playGround;
+let snake;
+let playerEntity;
+
+let run;
+
+// 玩家的默认坐标，用于检测玩家的控制
+let playerX = 0, playerZ = -10;
+
+// 全局的游戏控制器
+// let controller = new Controller();
 
 sys.initialize = function () {
-	//初始化
-	sys.listenForEvent("my:player_exited", (data) => My.onPlayerJoined(data.player));
-	sys.listenForEvent("my:player_joined", (data) => My.onPlayerJoined(data.player));
-	teams.push(new Team("反恐精英", "§2"));
-	teams.push(new Team("恐怖分子", "§4"));
-	fortresses.push(new Fortress("A", 200, {xStart: -5, yStart: 70, zStart: -5, xEnd: 5, yEnd: 80, zEnd: 5}, null));
-	fortresses.push(new Fortress("B", 200, {xStart: -15, yStart: 70, zStart: -15, xEnd: -5, yEnd: 80, zEnd: -5}, null));
+	sys.listenForEvent("my:player_joined", (playerEntity) => My.onPlayerJoined(playerEntity));
+	sys.listenForEvent("my:player_exited", (playerEntity) => My.onPlayerExited(playerEntity));
 };
 
+// 游戏刻计数器
 let ticks = 0;
-//系统更新
 sys.update = function () {
+	
 	ticks++;
-	if (ticks === 100) {
+	if (ticks === 5) {
 		ticks = 0;
-		let message = "";
-		message += "\n§4【玩家】§2\n";
-		for (let player of players) {
-			message += "名称：" + player.getName() + " 队伍：" + player.getTeam().getName() + "\n";
+		
+		// controller.update();
+		
+		if (run === true) {
+			// Event.chat("5ticks");
+			
+			let comp = Entity.getPosition(playerEntity);
+			let blockX = Math.floor(comp.x - playerX);
+			let blockZ = Math.floor(comp.z - playerZ);
+			if (blockZ === 0) {
+				if (blockX === 1) {
+					snake.turnRight();
+				} else if (blockX === -1) {
+					snake.turnLeft();
+				}
+			} else if (blockX === 0) {
+				if (blockZ === 1) {
+					snake.turnDown();
+				} else if (blockZ === -1) {
+					snake.turnUp();
+				}
+			}
+			snake.update();
+			playGround.clearGround(5);
+			snake.draw();
 		}
-		message += "§4【队伍】§2\n";
-		for (let team of teams) {
-			message += "名称：" + team.getName() + "\n";
-		}
-		message += "§4【据点】§2\n";
-		for (let fortress of fortresses) {
-			message += "名称：" + fortress.getName() + " 剩余血量：" + fortress.getHealth() + " 所有者：" + fortress.getOwner().getName() + "\n";
-		}
-		Event.chat(message);
 	}
-	//遍历玩家
-	for (let player of players) {
-		//遍历据点
-		for (let fortress of fortresses) {
-			if (player.isInFortress(fortress)) {
-				fortress.hurt(player.getTeam(), 1);
+};
+
+/**
+ * 当玩家进入世界时被调用
+ * @param player 玩家实体
+ */
+My.onPlayerJoined = function (player) {
+	playerEntity = player;
+	playGround = new PlayGround(-10, 6, -40, 0);
+	snake = new Snake(playGround);
+	playGround.clearGround();
+	playGround.randomFood();
+	run = true;
+	
+	// 添加一个玩家
+	// controller.addPlayer(player);
+};
+
+/**
+ * 当玩家退出世界时被调用
+ * @param player 玩家实体
+ */
+My.onPlayerExited = function (player) {
+	// controller.removePlayer(player);
+};
+
+/**
+ * 表示一条贪吃蛇
+ * @param playGround 对应的面板
+ * @constructor
+ */
+let Snake = function (playGround) {
+	this.UP = 0;
+	this.LEFT = 1;
+	this.DOWN = 2;
+	this.RIGHT = 3;
+	// 游戏面板，待删除
+	this.playGround = playGround;
+	// 蛇头位置
+	this.snakeHead = {
+		x: 10,
+		y: 10
+	};
+	// 身体
+	this.snakeBodies = [{x: 9, y: 10}];
+	// 速度
+	this.speed = 1;
+	// 方向
+	this.direction = this.RIGHT;
+	
+	/**
+	 * 向上转
+	 */
+	this.turnUp = function () {
+		if (this.direction !== this.DOWN) {
+			this.direction = this.UP;
+		}
+	};
+	/**
+	 * 向左转
+	 */
+	this.turnLeft = function () {
+		if (this.direction !== this.RIGHT) {
+			this.direction = this.LEFT;
+		}
+	};
+	/**
+	 * 向左转
+	 */
+	this.turnDown = function () {
+		if (this.direction !== this.UP) {
+			this.direction = this.DOWN;
+		}
+	};
+	/**
+	 * 向右转
+	 */
+	this.turnRight = function () {
+		if (this.direction !== this.LEFT) {
+			this.direction = this.RIGHT;
+		}
+	};
+	/**
+	 * 更新一次位置
+	 */
+	this.update = function () {
+		// Event.chat("update");
+		// 先移动身体
+		for (let i = this.snakeBodies.length - 1; i >= 0; i--) {
+			// 如果碰到了身体
+			if (this.snakeHead.x === this.snakeBodies[i].x && this.snakeHead.y === this.snakeBodies[i].y) {
+				this.gameOver();
+			}
+			
+			// 如果是第一个身体，则直接使用头的位置
+			if (i === 0) {
+				this.snakeBodies[i].x = this.snakeHead.x;
+				this.snakeBodies[i].y = this.snakeHead.y;
+			} else {
+				// 如果不是则继承上一个身体的位置
+				this.snakeBodies[i].x = this.snakeBodies[i - 1].x;
+				this.snakeBodies[i].y = this.snakeBodies[i - 1].y;
 			}
 		}
-	}
+		
+		// 移动头
+		switch (this.direction) {
+			case this.UP:
+				if (this.snakeHead.y < this.playGround.height)
+					this.snakeHead.y += this.speed;
+				else
+					this.gameOver();
+				break;
+			case this.DOWN:
+				if (this.snakeHead.y > 0)
+					this.snakeHead.y -= this.speed;
+				else
+					this.gameOver();
+				break;
+			case this.RIGHT:
+				if (this.snakeHead.x < this.playGround.width)
+					this.snakeHead.x += this.speed;
+				else
+					this.gameOver();
+				break;
+			case this.LEFT:
+				if (this.snakeHead.x > 0)
+					this.snakeHead.x -= this.speed;
+				else
+					this.gameOver();
+				break;
+		}
+		// Event.chat("iteratorFoods");
+		// 吃食物
+		for (let food of this.playGround.foods) {
+			if (this.snakeHead.x === food.x && this.snakeHead.y === food.y) {
+				this.playGround.removeFood(food);
+				this.playGround.randomFood();
+				// 添加一个身体
+				this.addBody(this.snakeBodies[this.snakeBodies.length - 1].x, this.snakeBodies[this.snakeBodies.length - 1].y);
+			}
+		}
+	};
+	/**
+	 * 添加一个身体
+	 * @param x
+	 * @param y
+	 */
+	this.addBody = function (x, y) {
+		// Event.chat("addBody");
+		this.snakeBodies.push({x: x, y: y});
+	};
+	
+	// ====================================待删除=============================================
+	/**
+	 * 绘制该贪吃蛇
+	 */
+	this.draw = function () {
+		// Event.chat("draw");
+		for (let food of this.playGround.foods) {
+			//food
+			this.playGround.dot(food.x, food.y, "wool", 3);
+		}
+		for (let snakeBody of this.snakeBodies) {
+			// body
+			this.playGround.dot(snakeBody.x, snakeBody.y, "wool", 2);
+		}
+		// head
+		this.playGround.dot(this.snakeHead.x, this.snakeHead.y, "wool", 1);
+		
+		// =============== 待删除 ================
+		// Event.chat(this.snakeBodies.length);
+		/*for (let i = this.snakeBodies.length - 1; i >= 0; i--) {
+			// 如果碰到了身体
+			if (this.snakeHead.x === this.snakeBodies[i].x && this.snakeHead.y === this.snakeBodies[i].y) {
+				this.gameOver();
+			}
+			
+			if (i === 0) {
+				this.snakeBodies[i].x = this.snakeHead.x;
+				this.snakeBodies[i].y = this.snakeHead.y;
+			} else {
+				this.snakeBodies[i].x = this.snakeBodies[i - 1].x;
+				this.snakeBodies[i].y = this.snakeBodies[i - 1].y;
+			}
+		}*/
+	};
+	this.gameOver = function () {
+		Event.showTitle("@p", "Game Over!");
+		run = false;
+		this.playGround.clearGround(1);
+	};
 };
 
-//当玩家加入世界
-My.onPlayerJoined = function (player) {
-	Event.execute("title \"" + Entity.getName(player) + "\" title §6Welcome !");
-	players.push(new Player(player));
-	if (players.length % 2 === 0) {
-		players[0].setTeam(teams[0]);
-	}
-	if (players.length % 2 === 1) {
-		players[0].setTeam(teams[1]);
-	}
+/**
+ * 表示一个游戏画布，一个游戏画布即为一场游戏
+ * @param xStart 游戏面板的x轴起始位置
+ * @param yStart 游戏面板的y轴起始位置
+ * @param zStart 游戏面板的z轴起始位置
+ * @param player 绑定的玩家
+ * @constructor
+ */
+let PlayGround = function (xStart, yStart, zStart, player) {
+	this.width = 20;
+	this.height = 20;
+	
+	this.xStart = xStart;
+	this.yStart = yStart;
+	this.zStart = zStart;
+	
+	this.foods = [];
+	
+	this.playerEntity = player;
+	this.snake = new Snake(this);
+	
+	let xEnd = this.xStart + this.width;
+	let yEnd = this.yStart + this.height;
+	let zEnd = this.zStart;
+	
+	/**
+	 * 清屏
+	 */
+	this.clearGround = function (color) {
+		Commands.fill(this.xStart, this.yStart, this.zStart, xEnd, yEnd, zEnd, "wool", color);
+	};
+	
+	/**
+	 * 在面板上绘制一个点
+	 * @param x 横坐标
+	 * @param y 纵坐标
+	 * @param block 方块
+	 * @param data 方块特殊值
+	 */
+	this.dot = function (x, y, block, data) {
+		// 重建自-x左向右+x，自-y下向上+y的坐标系
+		Commands.setBlock(this.xStart + x, this.yStart + y, this.zStart, block, data);
+	};
+	
+	/**
+	 * 添加一个食物
+	 * @param food 食物对象
+	 */
+	this.addFood = function (food) {
+		this.foods.push(food);
+	};
+	
+	/**
+	 * 添加一个随机坐标、随机类型的食物
+	 */
+	this.randomFood = function () {
+		// Event.chat("12timers");
+		let randomX = Math.round(Math.random() * playGround.width);
+		let randomY = Math.round(Math.random() * playGround.height);
+		// Event.chat("randomX: " + randomX + " randomY: " + randomY);
+		playGround.addFood(new Food(randomX, randomY, 1));
+	};
+	
+	/**
+	 * 移除一个食物
+	 * @param food 食物的对象
+	 */
+	this.removeFood = function (food) {
+		for (let i = 0; i < this.foods.length; i++) {
+			if (this.foods[i] === food) {
+				// 删除food
+				this.foods.splice(i, 1);
+			}
+		}
+	};
+	
+	/**
+	 * 更新一次游戏画布
+	 */
+	this.update = function () {
+		this.snake.update();
+	};
+	
+	/**
+	 * 获取当前得分
+	 * @returns {number} 得分
+	 */
+	this.getScore = function () {
+		return 0;
+	};
+	
+	/**
+	 * 通知游戏结束
+	 */
+	this.gameOver = function () {
+		Event.showTitle("@p", "Game Over!");
+		run = false;
+		this.clearGround(1);
+	};
+	
+	/**
+	 * 检测游戏是否已经结束
+	 * @returns {boolean}
+	 */
+	this.isOver = function () {
+		return false;
+	};
+	
+	this.draw = function () {
+		// Event.chat("draw");
+		// 绘制食物
+		for (let food of this.foods) {
+			this.dot(food.x, food.y, "wool", 3);
+		}
+		// 绘制身体
+		for (let snakeBody of this.snake.snakeBodies) {
+			this.dot(snakeBody.x, snakeBody.y, "wool", 2);
+		}
+		// 绘制头
+		this.dot(this.snake.snakeHead.x, this.snake.snakeHead.y, "wool", 1);
+		
+		/*// Event.chat(this.snakeBodies.length);
+		// 对蛇的身体位置进行一次更新
+		for (let i = this.snake.snakeBodies.length - 1; i >= 0; i--) {
+			
+			if (this.snake.snakeHead.x === this.snake.snakeBodies[i].x && this.snake.snakeHead.y === this.snake.snakeBodies[i].y) {
+				this.gameOver();
+			}
+			
+			if (i === 0) {
+				this.snake.snakeBodies[i].x = this.snake.snakeHead.x;
+				this.snake.snakeBodies[i].y = this.snake.snakeHead.y;
+			} else {
+				this.snake.snakeBodies[i].x = this.snake.snakeBodies[i - 1].x;
+				this.snake.snakeBodies[i].y = this.snake.snakeBodies[i - 1].y;
+			}
+		}*/
+	};
 };
 
-//当玩家退出世界
-My.onPlayerExited = function (player) {
-	game.playerDisconnect(player);
-	for (let i = 0; i < players.length; i++) {
-		if (players[i].entity === player) {
-			//移除玩家
-			players.splice(i, 1);
+/**
+ * 游戏控制类，用于控制初始化、玩家加入、玩家退出
+ * @constructor
+ */
+let Controller = function () {
+	this.playGrounds = [];
+	this.players = [];
+	
+	/**
+	 * 添加一个玩家
+	 * @param player 玩家的实体
+	 */
+	this.addPlayer = function (player) {
+		this.players.push(player);
+		this.playGrounds.push(new PlayGround(player));
+	};
+	
+	/**
+	 * 删除一个玩家
+	 * @param player 玩家的实体
+	 */
+	this.removePlayer = function (player) {
+		for (let i = 0; i < this.players.length; i++) {
+			if (this.players[i] === player) {
+				//移除玩家
+				this.players.splice(i, 1);
+			}
+		}
+	};
+	
+	/**
+	 * 对游戏面板进行一次更新
+	 * 此方法会对所有游戏面板的数据进行更新，并绘制所有面板
+	 */
+	this.update = function () {
+		for (playGround of this.playGrounds) {
+			playGround.clearGround();
+			playGround.update();
+			playGround.draw();
 		}
 	}
 };
 
-let Entity = {};
+/**
+ * 表示一个食物，存储食物的坐标及分数
+ * @param x 横坐标
+ * @param y 纵坐标
+ * @param type 食物的类型，有normal、big等，不同类型所对应的得分及效果不同
+ * @constructor
+ */
+let Food = function (x, y, type) {
+	this.x = x;
+	this.y = y;
+	this.type = type;
+};
 
+let Commands = {};
+/**
+ * 广播一条填充方块的事件
+ * @param fromX X轴起始位置
+ * @param fromY Y轴起始位置
+ * @param fromZ Z轴起始位置
+ * @param toX X轴结束位置
+ * @param toY Y轴结束位置
+ * @param toZ Z轴结束位置
+ * @param block 所要填充的方块
+ */
+Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block) {
+	sys.broadcastEvent("minecraft:execute_command", "fill " +
+		fromX + " " +
+		fromY + " " +
+		fromZ + " " +
+		toX + " " +
+		toY + " " +
+		toZ + " " +
+		block
+	);
+};
+
+/**
+ * 广播一条填充方块的事件
+ * @param fromX X轴起始位置
+ * @param fromY Y轴起始位置
+ * @param fromZ Z轴起始位置
+ * @param toX X轴结束位置
+ * @param toY Y轴结束位置
+ * @param toZ Z轴结束位置
+ * @param block 所要填充的方块
+ * @param data 所要填充的方块的特殊值
+ */
+Commands.fill = function (fromX, fromY, fromZ, toX, toY, toZ, block, data) {
+	sys.broadcastEvent("minecraft:execute_command", "fill " +
+		fromX + " " +
+		fromY + " " +
+		fromZ + " " +
+		toX + " " +
+		toY + " " +
+		toZ + " " +
+		block + " " +
+		data
+	);
+};
+
+/**
+ * 广播一条放置方块的事件
+ * @param x X轴坐标
+ * @param y Y轴坐标
+ * @param z Z轴坐标
+ * @param block 所要放置的方块的标识符
+ */
+Commands.setBlock = function (x, y, z, block) {
+	sys.broadcastEvent("minecraft:execute_command", "setBlock " +
+		x + " " +
+		y + " " +
+		z + " " +
+		block
+	);
+};
+
+/**
+ * 广播一条放置方块的事件
+ * @param x X轴坐标
+ * @param y Y轴坐标
+ * @param z Z轴坐标
+ * @param block 所要放置的方块的标识符
+ * @param data 所要放置的方块的特殊值
+ */
+Commands.setBlock = function (x, y, z, block, data) {
+	sys.broadcastEvent("minecraft:execute_command", "setBlock " +
+		x + " " +
+		y + " " +
+		z + " " +
+		block + " " +
+		data
+	);
+};
+
+
+let Entity = {};
+/**
+ * 获取一个实体的坐标组件
+ * @param entity 实体的对象
+ * @returns 实体的坐标组件
+ */
 Entity.getPosition = function (entity) {
 	if (sys.hasComponent(entity, "minecraft:position")) {
 		return sys.getComponent(entity, "minecraft:position");
+	} else {
+		return null;
 	}
 };
+/**
+ * 设置一个实体的坐标
+ * @param entity 实体的对象
+ * @param position 坐标
+ */
 Entity.setPosition = function (entity, position) {
-	if (sys.hasComponent(entity, "minecraft:position")) {
-		sys.applyComponentChanges(entity, position);
-	}
+	sys.applyComponentChanges(entity, position);
 };
-
-Entity.getName = function (entity) {
-	if (sys.hasComponent(entity, "minecraft:nameable")) {
-		let comp = sys.getComponent(entity, "minecraft:nameable");
-		return comp.name;
-	}
-};
-
 
 let Event = {};
+/**
+ * 向聊天栏发送一条消息
+ * @param content 消息内容
+ */
 Event.chat = function (content) {
 	sys.broadcastEvent("minecraft:display_chat_event", content);
 };
-
-Event.execute = function (command) {
-	sys.broadcastEvent("minecraft:execute_command", command);
+/**
+ * 显示一个标题
+ * @param target 目标
+ * @param content 标题的内容
+ */
+Event.showTitle = function (target, content) {
+	sys.broadcastEvent("minecraft:execute_command", "title " + target + " title " + content)
 };
