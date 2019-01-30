@@ -77,7 +77,7 @@ let PlayGround = function (x, y, z, player) {
 	
 	// 清屏
 	this.clearGround = function (color) {
-		Commands.fill(this.xStart, this.yStart, this.zStart, xEnd, yEnd, zEnd, "wool", color);
+		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
 	};
 	this.update = function () {
 		if (!this.isOver) {
