@@ -10,8 +10,9 @@ let run = false;
 sys.initialize = function () {
 	// controller = new Controller();
 	// Scoreboard.addScoreboard();
-	sys.listenForEvent("my:player_joined", (playerEntity) => My.onPlayerJoined(playerEntity.player));
-	sys.listenForEvent("my:player_exited", (playerEntity) => My.onPlayerExited(playerEntity.player));
+	sys.listenForEvent("my:player_joined", (player) => My.onPlayerJoined(player));
+	sys.listenForEvent("my:player_exited", (player) => My.onPlayerExited(player));
+	sys.listenForEvent("minecraft:entity_created", (eventData) => My.onEntityCreated(eventData.entity))
 };
 
 let tick = 0;
@@ -65,7 +66,7 @@ let PlayGround = function (x, y, z, player) {
 	Event.chat("PlayGround");
 	
 	this.playerEntity = player;
-	this.playerName = "Atwzj";
+	this.playerName = Entity.getName(player);
 	
 	this.height = 20;
 	this.width = 20;
@@ -355,10 +356,8 @@ Entity.setPlayerPosition = function (playerName, x, y, z) {
 	);
 };
 Entity.getName = function (entity) {
-	if (sys.hasConponent(entity, "minecraft:nameable")) {
-		let comp = sys.getComponent(entity, "minecraft:nameable");
-		Event.chat(JSON.stringify(comp));
-		return comp.data.name;
+	if (sys.hasComponent(entity, "minecraft:nameable")) {
+		return sys.getComponent(entity, "minecraft:nameable").data.name;
 	} else {
 		return null;
 	}

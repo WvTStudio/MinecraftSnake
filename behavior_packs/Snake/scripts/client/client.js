@@ -4,8 +4,8 @@ let player;
 sys.initialize = function() {
 	// 玩家加入
 	sys.listenForEvent("minecraft:client_entered_world", (eventData) => {
-		player = eventData;
-		sys.broadcastEvent("my:player_joined", player)
+		player = eventData.player;
+		sys.broadcastEvent("my:player_joined", player);
 	});
 };
 
