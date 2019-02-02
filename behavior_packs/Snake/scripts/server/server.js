@@ -39,24 +39,23 @@ let Controller = function () {
 	
 	this.addPlayer = function (player) {
 		// addPlayer
-		this.playground = new PlayGround(this.playGrounds.length * 40, 5, 10, player);
+		let playground = new PlayGround(this.playGrounds.length * 40, 5, 10, player);
 		this.playGrounds.push(this.playground);
-		Scoreboard.addPlayer(Entity.getName(player));
-		Event.chat("Player Joined: " + player);
-		this.playground.randomFood();
-		run = true;
+		Scoreboard.addPlayer(playground.playerName);
+		// Event.chat("Player Joined: " + player);
+		playground.start();
 	};
 	
 	this.removePlayer = function (player) {
 		// removePlayer
-		Scoreboard.deletePlayer(Entity.getName(player));
+		Scoreboard.deletePlayer(playground.playerName);
 	};
 	
 	this.update = function () {
 		for (let playGround of this.playGrounds) {
 			playGround.update();
 			playGround.draw();
-			Scoreboard.changePlayerScore(Entity.getName(playGround.playerEntity), playGround.score);
+			Scoreboard.changePlayerScore(playGround.playerEntity, playGround.score);
 		}
 	};
 };
