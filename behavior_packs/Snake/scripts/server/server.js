@@ -12,7 +12,6 @@ sys.initialize = function () {
 	// Scoreboard.addScoreboard();
 	sys.listenForEvent("my:player_joined", (player) => My.onPlayerJoined(player));
 	sys.listenForEvent("my:player_exited", (player) => My.onPlayerExited(player));
-	sys.listenForEvent("minecraft:entity_created", (eventData) => My.onEntityCreated(eventData.entity))
 };
 
 let tick = 0;
