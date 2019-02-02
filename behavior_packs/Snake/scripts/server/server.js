@@ -87,6 +87,22 @@ let PlayGround = function (x, y, z, player) {
 	this.snake = new Snake();
 	this.foods = [];
 	
+	this.stop = function () {
+	
+	};
+	
+	this.remove = function () {
+	
+	};
+	
+	this.start = function () {
+	
+	};
+	
+	this.restart = function () {
+	
+	};
+	
 	// 清屏
 	this.clearGround = function (color) {
 		// Event.chat("PlayGround.clearGround()");
@@ -336,8 +352,7 @@ Commands.setBlock = function (x, y, z, block, data) {
 let Entity = {};
 Entity.getPosition = function (entity) {
 	if (sys.hasComponent(entity, "minecraft:position")) {
-		return sys.getComponent(entity, "minecraft:position").data;
-		
+		return sys.getComponent(entity, "minecraft:position");
 	} else {
 		Event.chat("No this comp");
 		return null;
