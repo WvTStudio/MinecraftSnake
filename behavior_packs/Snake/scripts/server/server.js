@@ -12,7 +12,6 @@ sys.initialize = function () {
 	Scoreboard.addScoreboard();
 	sys.listenForEvent("my:player_joined", (player) => My.onPlayerJoined(player));
 	sys.listenForEvent("my:player_exited", (player) => My.onPlayerExited(player));
-	sys.listenForEvent("minecraft:entity_created", (eventData) => My.onEntityCreated(eventData.entity))
 };
 
 let tick = 0;
@@ -88,6 +87,22 @@ let PlayGround = function (x, y, z, player) {
 	
 	this.snake = new Snake();
 	this.foods = [];
+	
+	this.stop = function () {
+	
+	};
+	
+	this.remove = function () {
+	
+	};
+	
+	this.start = function () {
+	
+	};
+	
+	this.restart = function () {
+	
+	};
 	
 	// 清屏
 	this.clearGround = function (color) {
@@ -334,8 +349,7 @@ Commands.setBlock = function (x, y, z, block, data) {
 let Entity = {};
 Entity.getPosition = function (entity) {
 	if (sys.hasComponent(entity, "minecraft:position")) {
-		return sys.getComponent(entity, "minecraft:position").data;
-		
+		return sys.getComponent(entity, "minecraft:position");
 	} else {
 		Event.chat("No this comp");
 		return null;
