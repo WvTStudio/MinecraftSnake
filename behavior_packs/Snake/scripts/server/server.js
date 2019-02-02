@@ -4,7 +4,6 @@ let sys = server.registerSystem(0, 0);
 
 let controller;
 
-let playground;
 let run = false;
 
 sys.initialize = function () {
@@ -56,7 +55,7 @@ let Controller = function () {
 		for (let playGround of this.playGrounds) {
 			playGround.update();
 			playGround.draw();
-			
+			Scoreboard.changePlayerScore(Entity.getName(playGround.playerEntity), playGround.score);
 		}
 	};
 };
