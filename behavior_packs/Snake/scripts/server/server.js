@@ -4,9 +4,6 @@ let sys = server.registerSystem(0, 0);
 
 let controller;
 
-let playground;
-let run = false;
-
 sys.initialize = function () {
 	controller = new Controller();
 	Scoreboard.addScoreboard();
@@ -16,12 +13,10 @@ sys.initialize = function () {
 
 let tick = 0;
 sys.update = function () {
-	if (run === true) {
-		if (++tick === 5) {
-			tick = 0;
-			// Event.chat("update");
-			controller.update();
-		}
+	if (++tick === 5) {
+		tick = 0;
+		Event.chat("update");
+		controller.update();
 	}
 };
 
@@ -40,22 +35,21 @@ let Controller = function () {
 	this.addPlayer = function (player) {
 		// addPlayer
 		let playground = new PlayGround(this.playGrounds.length * 40, 5, 10, player);
-		this.playGrounds.push(this.playground);
+		this.playGrounds.push(playground);
 		Scoreboard.addPlayer(playground.playerName);
-		// Event.chat("Player Joined: " + player);
+		Event.chat("Player Joined: " + player);
 		playground.start();
 	};
 	
 	this.removePlayer = function (player) {
 		// removePlayer
-		Scoreboard.deletePlayer(playground.playerName);
+		Scoreboard.deletePlayer(Entity.getName(player));
 	};
 	
 	this.update = function () {
 		for (let playGround of this.playGrounds) {
 			playGround.update();
-			playGround.draw();
-			Scoreboard.changePlayerScore(playGround.playerEntity, playGround.score);
+			Scoreboard.changePlayerScore(playGround.playerName, playGround.score);
 		}
 	};
 };
@@ -103,7 +97,7 @@ let PlayGround = function (x, y, z, player) {
 	};
 	
 	this.start = function () {
-		playground.randomFood();
+		this.randomFood();
 		this.run = true;
 	};
 	
@@ -118,7 +112,7 @@ let PlayGround = function (x, y, z, player) {
 	};
 	
 	this.update = function () {
-		// Event.chat("PlayGround.update()");
+		Event.chat("PlayGround.update()");
 		if (this.run === true && this.isOver === false) {
 			// 检测玩家的控制行为
 			let comp = Entity.getPosition(this.playerEntity);
@@ -129,7 +123,7 @@ let PlayGround = function (x, y, z, player) {
 			let absXOffset = Math.abs(xOffset);
 			let absZOffset = Math.abs(zOffset);
 			
-			// Event.chat("xOffset: " + xOffset + " zOffset: " + zOffset);
+			Event.chat("xOffset: " + xOffset + " zOffset: " + zOffset);
 			
 			// 如果横向偏移大于纵向偏移
 			if (absXOffset > absZOffset) {
@@ -152,8 +146,7 @@ let PlayGround = function (x, y, z, player) {
 			comp.data.z = this.controlCenter.z;
 			
 			// 将玩家传送回去
-			Entity.setPosition(this.playerName, comp);
-			
+			Entity.setPosition(this.playerEntity, comp);
 			// 更新贪吃蛇的位置
 			this.snake.update();
 			
@@ -377,6 +370,7 @@ Entity.getPosition = function (entity) {
 	}
 };
 Entity.setPosition = function (entity, comp) {
+	Event.chat("apply component changes");
 	sys.applyComponentChanges(entity, comp);
 };
 Entity.setPlayerPosition = function (playerName, x, y, z) {
