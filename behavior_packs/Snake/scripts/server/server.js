@@ -1,20 +1,36 @@
+"use strict";
+
 let sys = server.registerSystem(0, 0);
 
 let controller;
 
+let playground;
+let run = false;
+
 sys.initialize = function () {
-	controller = new Controller();
-	Scoreboard.addScoreboard();
+	// controller = new Controller();
+	// Scoreboard.addScoreboard();
+	sys.listenForEvent("my:player_joined", (playerEntity) => My.onPlayerJoined(playerEntity.player));
+	sys.listenForEvent("my:player_exited", (playerEntity) => My.onPlayerExited(playerEntity.player));
 };
 
+let tick = 0;
 sys.update = function () {
-	sys.listenForEvent("my:player_joined", (playerEntity) => My.onPlayerJoined(playerEntity));
-	sys.listenForEvent("my:player_exited", (playerEntity) => My.onPlayerExited(playerEntity));
+	if (run === true) {
+		if (++tick === 5) {
+			tick = 0;
+			// Event.chat("update");
+			playground.update();
+		}
+	}
 };
 
 let My = {};
 My.onPlayerJoined = function (playerEntity) {
-
+	Event.chat("Player Joined: " + playerEntity);
+	playground = new PlayGround(0, 6, 0, playerEntity);
+	playground.randomFood();
+	run = true;
 };
 
 My.onPlayerExited = function (playerEntity) {
@@ -45,13 +61,11 @@ let Controller = function () {
 };
 
 let PlayGround = function (x, y, z, player) {
-	this.player = {
-		entity: player,
-		name: Entity.getName(player),
-		x: 0,
-		y: 0,
-		z: 0
-	};
+	
+	Event.chat("PlayGround");
+	
+	this.playerEntity = player;
+	this.playerName = "Atwzj";
 	
 	this.height = 20;
 	this.width = 20;
@@ -63,11 +77,9 @@ let PlayGround = function (x, y, z, player) {
 	this.yEnd = this.yStart + this.height;
 	this.zEnd = this.zStart;
 	
-	this.controlCenter = {
-		x: this.xStart + 10,
-		y: this.yStart,
-		z: this.zStart - 20
-	};
+	this.controlCenterX = this.xStart + 10.5;
+	this.controlCenterY = this.yStart;
+	this.controlCenterZ = this.zStart - 19.5;
 	
 	this.isOver = false;
 	this.score = 0;
@@ -77,39 +89,50 @@ let PlayGround = function (x, y, z, player) {
 	
 	// 清屏
 	this.clearGround = function (color) {
+		// Event.chat("PlayGround.clearGround()");
 		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
 	};
+	
 	this.update = function () {
-		if (!this.isOver) {
+		// Event.chat("PlayGround.update()");
+		if (this.isOver === false) {
 			// 检测玩家的控制行为
-			let pos = Entity.getPosition(this.player.entity);
+			let pos = Entity.getPosition(this.playerEntity);
 			// 玩家相对于控制中心的偏移
-			let xOffset = pos.x - this.controlCenter.x;
-			let zOffset = pos.z - this.controlCenter.z;
+			let xOffset = pos.x - this.controlCenterX;
+			let zOffset = pos.z - this.controlCenterZ;
+			
+			let absXOffset = Math.abs(xOffset);
+			let absZOffset = Math.abs(zOffset);
+			
+			// Event.chat("xOffset: " + xOffset + " zOffset: " + zOffset);
 			
 			// 如果横向偏移大于纵向偏移
-			if (xOffset > zOffset) {
+			if (absXOffset > absZOffset) {
 				// 如果横向偏移为正
 				if (xOffset > 0) {
 					this.snake.turnRight();
 				} else if (xOffset < 0) {
 					this.snake.turnLeft();
 				}
-			} else if (zOffset > xOffset) {
+			} else if (absZOffset > absXOffset) {
 				if (zOffset > 0) {
-					this.snake.turnDown();
-				} else if (zOffset < 0) {
 					this.snake.turnUp();
+				} else if (zOffset < 0) {
+					this.snake.turnDown();
 				}
 			}
+			
+			// 将玩家传送回去
+			Entity.setPlayerPosition(this.playerName, this.controlCenterX, 4, this.controlCenterZ);
 			
 			// 更新贪吃蛇的位置
 			this.snake.update();
 			
 			// 遍历身体
-			for (let snakeBody of this.snakeBodies) {
+			for (let snakeBody of this.snake.snakeBodies) {
 				// 如果碰到了身体
-				if (this.x === snakeBody.x && this.y === snakeBody.y) {
+				if (this.snake.x === snakeBody.x && this.snake.y === snakeBody.y) {
 					this.gameOver();
 				}
 			}
@@ -123,7 +146,7 @@ let PlayGround = function (x, y, z, player) {
 			
 			// 吃食物
 			for (let food of this.foods) {
-				if (this.x === food.x && this.y === food.y) {
+				if (this.snake.x === food.x && this.snake.y === food.y) {
 					// 删除此食物
 					this.removeFood(food);
 					
@@ -132,39 +155,49 @@ let PlayGround = function (x, y, z, player) {
 					
 					// 随机生成一个食物
 					this.randomFood();
+					
 					// 添加一个身体
 					this.snake.addBody();
 				}
 			}
+			
+			this.draw();
 		}
 	};
+	
 	this.draw = function () {
-		// 清屏
-		this.clearGround();
-		// 绘制食物
-		for (let food of this.foods) {
-			this.dot(food.x, food.y, "wool", 3);
+		if (this.isOver === false) {
+			// 清屏
+			this.clearGround(5);
+			// 绘制食物
+			for (let food of this.foods) {
+				this.dot(food.x, food.y, "wool", 3);
+			}
+			// 绘制身体
+			for (let snakeBody of this.snake.snakeBodies) {
+				this.dot(snakeBody.x, snakeBody.y, "wool", 2);
+			}
+			// 绘制头
+			this.dot(this.snake.x, this.snake.y, "wool", 1);
 		}
-		// 绘制身体
-		for (let snakeBody of this.snake.snakeBodies) {
-			this.dot(snakeBody.x, snakeBody.y, "wool", 2);
-		}
-		// 绘制头
-		this.dot(this.snake.x, this.snake.y, "wool", 1);
 	};
+	
 	this.gameOver = function () {
 		this.isOver = true;
 		Event.showTitle("@p", "Game Over!");
 		this.clearGround(1);
 	};
+	
 	this.addFood = function (food) {
 		this.foods.push(food);
 	};
+	
 	this.randomFood = function () {
 		let randomX = Math.round(Math.random() * this.width);
 		let randomY = Math.round(Math.random() * this.height);
 		this.addFood(new Food(randomX, randomY, 0));
 	};
+	
 	this.removeFood = function (food) {
 		for (let i = 0; i < this.foods.length; i++) {
 			if (this.foods[i] === food) {
@@ -177,19 +210,22 @@ let PlayGround = function (x, y, z, player) {
 	this.clearGround = function (color) {
 		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
 	};
+	
 	this.dot = function (x, y, block, data) {
 		// 重建自-x左向右+x，自-y下向上+y的坐标系
 		Commands.setBlock(this.xStart + x, this.yStart + y, this.zStart, block, data);
 	};
 };
 
-let Food = function (x, y, type) {
+let Food = function (x, y, foodType) {
 	this.x = x;
 	this.y = y;
-	this.type = type;
+	this.foodType = foodType;
 };
 
 let Snake = function () {
+	Event.chat("Snake");
+	
 	this.UP = 0;
 	this.LEFT = 1;
 	this.DOWN = 2;
@@ -253,7 +289,6 @@ let Snake = function () {
 	this.addBody = function () {
 		this.snakeBodies.push({x: [this.snakeBodies.length - 1].x, y: this.snakeBodies[this.snakeBodies.length - 1].y});
 	};
-	
 };
 
 let Commands = {};
@@ -301,8 +336,10 @@ Commands.setBlock = function (x, y, z, block, data) {
 let Entity = {};
 Entity.getPosition = function (entity) {
 	if (sys.hasComponent(entity, "minecraft:position")) {
-		return sys.getComponent(entity, "minecraft:position");
+		return sys.getComponent(entity, "minecraft:position").data;
+		
 	} else {
+		Event.chat("No this comp");
 		return null;
 	}
 };
@@ -310,15 +347,21 @@ Entity.setPosition = function (entity, position) {
 	sys.applyComponentChanges(entity, position);
 };
 Entity.setPlayerPosition = function (playerName, x, y, z) {
-	sys.broadcastEvent("minecraft:execute_command", "tp " +
-		playerName + " " +
+	sys.broadcastEvent("minecraft:execute_command", "tp \"" +
+		playerName + "\" " +
 		x + " " +
 		y + " " +
 		z
 	);
 };
 Entity.getName = function (entity) {
-	return sys.getComponent(entity, "minecraft:nameable").name;
+	if (sys.hasConponent(entity, "minecraft:nameable")) {
+		let comp = sys.getComponent(entity, "minecraft:nameable");
+		Event.chat(JSON.stringify(comp));
+		return comp.data.name;
+	} else {
+		return null;
+	}
 };
 
 let Event = {};
