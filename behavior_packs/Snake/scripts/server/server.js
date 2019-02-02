@@ -8,8 +8,8 @@ let playground;
 let run = false;
 
 sys.initialize = function () {
-	// controller = new Controller();
-	// Scoreboard.addScoreboard();
+	controller = new Controller();
+	Scoreboard.addScoreboard();
 	sys.listenForEvent("my:player_joined", (player) => My.onPlayerJoined(player));
 	sys.listenForEvent("my:player_exited", (player) => My.onPlayerExited(player));
 	sys.listenForEvent("minecraft:entity_created", (eventData) => My.onEntityCreated(eventData.entity))
@@ -21,17 +21,14 @@ sys.update = function () {
 		if (++tick === 5) {
 			tick = 0;
 			// Event.chat("update");
-			playground.update();
+			controller.update();
 		}
 	}
 };
 
 let My = {};
 My.onPlayerJoined = function (playerEntity) {
-	Event.chat("Player Joined: " + playerEntity);
-	playground = new PlayGround(0, 6, 0, playerEntity);
-	playground.randomFood();
-	run = true;
+	controller.addPlayer(playerEntity);
 };
 
 My.onPlayerExited = function (playerEntity) {
@@ -43,8 +40,12 @@ let Controller = function () {
 	
 	this.addPlayer = function (player) {
 		// addPlayer
-		this.playGrounds.push(new PlayGround(this.playGrounds.length * 40, 5, 10, player));
+		this.playground = new PlayGround(this.playGrounds.length * 40, 5, 10, player);
+		this.playGrounds.push(this.playground);
 		Scoreboard.addPlayer(Entity.getName(player));
+		Event.chat("Player Joined: " + player);
+		this.playground.randomFood();
+		run = true;
 	};
 	
 	this.removePlayer = function (player) {
@@ -207,11 +208,7 @@ let PlayGround = function (x, y, z, player) {
 			}
 		}
 	};
-	
-	this.clearGround = function (color) {
-		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
-	};
-	
+
 	this.dot = function (x, y, block, data) {
 		// 重建自-x左向右+x，自-y下向上+y的坐标系
 		Commands.setBlock(this.xStart + x, this.yStart + y, this.zStart, block, data);
