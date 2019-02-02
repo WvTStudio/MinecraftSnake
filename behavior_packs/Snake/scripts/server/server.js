@@ -4,6 +4,7 @@ let sys = server.registerSystem(0, 0);
 
 let controller;
 
+let playground;
 let run = false;
 
 sys.initialize = function () {
@@ -62,7 +63,7 @@ let Controller = function () {
 
 let PlayGround = function (x, y, z, player) {
 	
-	Event.chat("PlayGround");
+	// Event.chat("PlayGround");
 	
 	this.playerEntity = player;
 	this.playerName = Entity.getName(player);
@@ -77,9 +78,12 @@ let PlayGround = function (x, y, z, player) {
 	this.yEnd = this.yStart + this.height;
 	this.zEnd = this.zStart;
 	
-	this.controlCenterX = this.xStart + 10.5;
-	this.controlCenterY = this.yStart;
-	this.controlCenterZ = this.zStart - 19.5;
+	this.controlCenter = {
+		x: this.xStart + 10.5,
+		y: 4,
+		z: this.zStart - 19.5
+	};
+	
 	
 	this.isOver = false;
 	this.score = 0;
@@ -87,16 +91,21 @@ let PlayGround = function (x, y, z, player) {
 	this.snake = new Snake();
 	this.foods = [];
 	
-	this.stop = function () {
+	this.run = false;
 	
+	this.stop = function () {
+		this.run = false;
+		this.isOver = true;
 	};
 	
 	this.remove = function () {
-	
+		this.run = false;
+		this.isOver = true;
 	};
 	
 	this.start = function () {
-	
+		playground.randomFood();
+		this.run = true;
 	};
 	
 	this.restart = function () {
@@ -111,12 +120,12 @@ let PlayGround = function (x, y, z, player) {
 	
 	this.update = function () {
 		// Event.chat("PlayGround.update()");
-		if (this.isOver === false) {
+		if (this.run === true && this.isOver === false) {
 			// 检测玩家的控制行为
-			let pos = Entity.getPosition(this.playerEntity);
+			let comp = Entity.getPosition(this.playerEntity);
 			// 玩家相对于控制中心的偏移
-			let xOffset = pos.x - this.controlCenterX;
-			let zOffset = pos.z - this.controlCenterZ;
+			let xOffset = comp.data.x - this.controlCenter.x;
+			let zOffset = comp.data.z - this.controlCenter.z;
 			
 			let absXOffset = Math.abs(xOffset);
 			let absZOffset = Math.abs(zOffset);
@@ -139,8 +148,12 @@ let PlayGround = function (x, y, z, player) {
 				}
 			}
 			
+			comp.data.x = this.controlCenter.x;
+			comp.data.y = this.controlCenter.y;
+			comp.data.z = this.controlCenter.z;
+			
 			// 将玩家传送回去
-			Entity.setPlayerPosition(this.playerName, this.controlCenterX, 4, this.controlCenterZ);
+			Entity.setPosition(this.playerName, comp);
 			
 			// 更新贪吃蛇的位置
 			this.snake.update();
@@ -175,14 +188,20 @@ let PlayGround = function (x, y, z, player) {
 					// 添加一个身体
 					this.snake.addBody();
 				}
+				
+				this.draw();
 			}
-			
-			this.draw();
 		}
 	};
 	
+	// 清屏
+	this.clearGround = function (color) {
+		// Event.chat("PlayGround.clearGround()");
+		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
+	};
+	
 	this.draw = function () {
-		if (this.isOver === false) {
+		if (!this.isOver) {
 			// 清屏
 			this.clearGround(5);
 			// 绘制食物
@@ -222,7 +241,11 @@ let PlayGround = function (x, y, z, player) {
 			}
 		}
 	};
-
+	
+	this.clearGround = function (color) {
+		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
+	};
+	
 	this.dot = function (x, y, block, data) {
 		// 重建自-x左向右+x，自-y下向上+y的坐标系
 		Commands.setBlock(this.xStart + x, this.yStart + y, this.zStart, block, data);
@@ -354,8 +377,8 @@ Entity.getPosition = function (entity) {
 		return null;
 	}
 };
-Entity.setPosition = function (entity, position) {
-	sys.applyComponentChanges(entity, position);
+Entity.setPosition = function (entity, comp) {
+	sys.applyComponentChanges(entity, comp);
 };
 Entity.setPlayerPosition = function (playerName, x, y, z) {
 	sys.broadcastEvent("minecraft:execute_command", "tp \"" +
