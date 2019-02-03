@@ -9,24 +9,37 @@ sys.initialize = function () {
 	Scoreboard.addScoreboard();
 	sys.listenForEvent("my:player_joined", (player) => My.onPlayerJoined(player));
 	sys.listenForEvent("my:player_exited", (player) => My.onPlayerExited(player));
+	
 };
 
 let tick = 0;
 sys.update = function () {
 	if (++tick === 5) {
 		tick = 0;
-		Event.chat("update");
+		// Event.chat("update");
 		controller.update();
 	}
 };
 
 let My = {};
 My.onPlayerJoined = function (playerEntity) {
-	controller.addPlayer(playerEntity);
+	let query = sys.registerQuery();
+	
+	let entities = sys.getEntitiesFromQuery(query);
+	for (let entity of entities) {
+		
+		if (entity.__identifier__ === "minecraft:player") {
+			Event.chat(JSON.stringify(playerEntity));
+			Event.chat(JSON.stringify(entity));
+			Event.chat(Entity.getName(entity));
+			// Event.chat(Entity.getName(entity));
+			// controller.addPlayer(entity);
+		}
+	}
 };
 
 My.onPlayerExited = function (playerEntity) {
-
+	controller.removePlayer(playerEntity);
 };
 
 let Controller = function () {
@@ -37,13 +50,20 @@ let Controller = function () {
 		let playground = new PlayGround(this.playGrounds.length * 40, 5, 10, player);
 		this.playGrounds.push(playground);
 		Scoreboard.addPlayer(playground.playerName);
-		Event.chat("Player Joined: " + player);
+		Event.chat(playground.playerName);
 		playground.start();
 	};
 	
 	this.removePlayer = function (player) {
 		// removePlayer
 		Scoreboard.deletePlayer(Entity.getName(player));
+		
+		// 暂时、待修改
+		for (let playGround of this.playGrounds) {
+			if (playGround.playerName === Entity.getName(player)) {
+				playGround.remove();
+			}
+		}
 	};
 	
 	this.update = function () {
@@ -55,9 +75,7 @@ let Controller = function () {
 };
 
 let PlayGround = function (x, y, z, player) {
-	
 	// Event.chat("PlayGround");
-	
 	this.playerEntity = player;
 	this.playerName = Entity.getName(player);
 	
@@ -67,6 +85,7 @@ let PlayGround = function (x, y, z, player) {
 	this.xStart = x;
 	this.yStart = y;
 	this.zStart = z;
+	
 	this.xEnd = this.xStart + this.width;
 	this.yEnd = this.yStart + this.height;
 	this.zEnd = this.zStart;
@@ -76,7 +95,6 @@ let PlayGround = function (x, y, z, player) {
 		y: 4,
 		z: this.zStart - 19.5
 	};
-	
 	
 	this.isOver = false;
 	this.score = 0;
@@ -102,7 +120,11 @@ let PlayGround = function (x, y, z, player) {
 	};
 	
 	this.restart = function () {
-	
+		this.stop();
+		this.snake = new Snake();
+		this.isOver = false;
+		this.foods = [];
+		this.start();
 	};
 	
 	// 清屏
@@ -112,7 +134,7 @@ let PlayGround = function (x, y, z, player) {
 	};
 	
 	this.update = function () {
-		Event.chat("PlayGround.update()");
+		// Event.chat("PlayGround.update()");
 		if (this.run === true && this.isOver === false) {
 			// 检测玩家的控制行为
 			let comp = Entity.getPosition(this.playerEntity);
@@ -123,7 +145,7 @@ let PlayGround = function (x, y, z, player) {
 			let absXOffset = Math.abs(xOffset);
 			let absZOffset = Math.abs(zOffset);
 			
-			Event.chat("xOffset: " + xOffset + " zOffset: " + zOffset);
+			// Event.chat("xOffset: " + xOffset + " zOffset: " + zOffset);
 			
 			// 如果横向偏移大于纵向偏移
 			if (absXOffset > absZOffset) {
@@ -186,12 +208,6 @@ let PlayGround = function (x, y, z, player) {
 		}
 	};
 	
-	// 清屏
-	this.clearGround = function (color) {
-		// Event.chat("PlayGround.clearGround()");
-		Commands.fill(this.xStart, this.yStart, this.zStart, this.xEnd, this.yEnd, this.zEnd, "wool", color);
-	};
-	
 	this.draw = function () {
 		if (!this.isOver) {
 			// 清屏
@@ -211,7 +227,7 @@ let PlayGround = function (x, y, z, player) {
 	
 	this.gameOver = function () {
 		this.isOver = true;
-		Event.showTitle("@p", "Game Over!");
+		Event.showTitle(this.playerName, "Game Over!");
 		this.clearGround(1);
 	};
 	
@@ -251,7 +267,7 @@ let Food = function (x, y, foodType) {
 };
 
 let Snake = function () {
-	Event.chat("Snake");
+	// Event.chat("Snake");
 	
 	this.UP = 0;
 	this.LEFT = 1;
@@ -370,7 +386,6 @@ Entity.getPosition = function (entity) {
 	}
 };
 Entity.setPosition = function (entity, comp) {
-	Event.chat("apply component changes");
 	sys.applyComponentChanges(entity, comp);
 };
 Entity.setPlayerPosition = function (playerName, x, y, z) {
