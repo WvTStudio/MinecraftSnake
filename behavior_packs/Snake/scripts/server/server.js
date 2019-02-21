@@ -29,11 +29,8 @@ My.onPlayerJoined = function (playerEntity) {
 	for (let entity of entities) {
 		
 		if (entity.__identifier__ === "minecraft:player") {
-			Event.chat(JSON.stringify(playerEntity));
-			Event.chat(JSON.stringify(entity));
-			Event.chat(Entity.getName(entity));
 			// Event.chat(Entity.getName(entity));
-			// controller.addPlayer(entity);
+			controller.addPlayer(entity);
 		}
 	}
 };
@@ -50,7 +47,7 @@ let Controller = function () {
 		let playground = new PlayGround(this.playGrounds.length * 40, 5, 10, player);
 		this.playGrounds.push(playground);
 		Scoreboard.addPlayer(playground.playerName);
-		Event.chat(playground.playerName);
+		// Event.chat(playground.playerName);
 		playground.start();
 	};
 	
